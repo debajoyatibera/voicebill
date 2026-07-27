@@ -1,0 +1,10 @@
+<!--
+  This is NOT a full Info.plist — it's a reference snippet.
+  After you run `flutter create .`, open the REAL file at
+  ios/Runner/Info.plist and add these two keys inside the
+  outermost <dict> ... </dict> block. Then delete this file.
+-->
+<key>NSMicrophoneUsageDescription</key>
+<string>VoiceBill needs the microphone to hear you speak each sale.</string>
+<key>NSSpeechRecognitionUsageDescription</key>
+<string>VoiceBill uses speech recognition to convert your spoken sale into text.</string>
