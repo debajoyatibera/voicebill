@@ -58,3 +58,4 @@ app.*.map.json
 # Never commit secrets
 *.env
 secrets.dart
+*-key.json

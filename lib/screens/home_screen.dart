@@ -7,8 +7,7 @@ import '../services/storage_service.dart';
 import '../widgets/sale_card.dart';
 
 class HomeScreen extends StatefulWidget {
-  final String geminiApiKey;
-  const HomeScreen({super.key, required this.geminiApiKey});
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -34,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _gemini = GeminiService(apiKey: widget.geminiApiKey);
+    _gemini = GeminiService();
     _loadSales();
   }
 
