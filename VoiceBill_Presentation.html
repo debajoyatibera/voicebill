@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VoiceBill — Hack Synthesis 3.0 Presentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0A192F;
+      --card-bg: #1E293B;
+      --card-border: #334155;
+      --accent-cyan: #00F5D4;
+      --accent-blue: #0083B0;
+      --accent-gold: #FFB703;
+      --accent-coral: #FF416C;
+      --text-white: #F8FAFC;
+      --text-silver: #94A3B8;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle at top right, #112240, #0A192F);
+      color: var(--text-white);
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .top-bar {
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--card-border);
+      z-index: 100;
+    }
+    .logo-badge {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 18px;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .slide-counter {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-silver);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+    .print-btn {
+      background: var(--accent-blue);
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .print-btn:hover {
+      background: var(--accent-cyan);
+      color: #0A192F;
+    }
+    .viewport {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 48px;
+    }
+    .slide {
+      position: absolute;
+      width: 100%;
+      max-width: 1150px;
+      height: calc(100vh - 140px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: translateY(20px) scale(0.98);
+    }
+    .slide.active {
+      opacity: 1;
+      pointer-events: all;
+      transform: translateY(0) scale(1);
+    }
+    .slide-header {
+      margin-bottom: 24px;
+    }
+    .slide-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 38px;
+      font-weight: 800;
+      color: var(--text-white);
+      letter-spacing: -0.5px;
+    }
+    .slide-subtitle {
+      font-size: 18px;
+      color: var(--accent-cyan);
+      font-weight: 600;
+      margin-top: 6px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      width: 100%;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      width: 100%;
+    }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      width: 100%;
+    }
+    .card {
+      background: rgba(30, 41, 59, 0.75);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(8px);
+      transition: transform 0.3s, border-color 0.3s;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent-cyan);
+    }
+    .card-icon {
+      font-size: 28px;
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 245, 212, 0.1);
+    }
+    .card-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--accent-cyan);
+    }
+    .card-desc {
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text-silver);
+    }
+    .hero-container {
+      text-align: center;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .hero-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #FFFFFF 0%, var(--accent-cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 20px;
+    }
+    .hero-subtitle {
+      font-size: 24px;
+      color: var(--text-silver);
+      margin-bottom: 40px;
+      line-height: 1.5;
+    }
+    .badge-row {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      background: rgba(0, 245, 212, 0.12);
+      border: 1px solid var(--accent-cyan);
+      color: var(--accent-cyan);
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .nav-bar {
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      background: #0B132B;
+      border-top: 1px solid var(--card-border);
+    }
+    .nav-btn {
+      background: #1E293B;
+      color: white;
+      border: 1px solid var(--card-border);
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover {
+      background: var(--accent-blue);
+      border-color: var(--accent-blue);
+    }
+    .progress-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      height: 4px;
+      background: var(--accent-cyan);
+      transition: width 0.3s;
+      z-index: 200;
+    }
+    @media print {
+      .top-bar, .nav-bar, .progress-bar { display: none; }
+      body { background: #0A192F; overflow: visible; height: auto; }
+      .slide {
+        position: relative;
+        opacity: 1;
+        pointer-events: all;
+        transform: none;
+        page-break-after: always;
+        height: 100vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <div class="logo-badge">🎙️ VoiceBill • Hack Synthesis 3.0</div>
+    <div class="slide-counter"><span id="currSlide">1</span> / <span id="totalSlide">10</span></div>
+    <button class="print-btn" onclick="window.print()">🖨️ Print / Save PDF</button>
+  </div>
+
+  <div class="viewport">
+    <!-- Slide 1: Hero -->
+    <div class="slide active">
+      <div class="hero-container">
+        <h1 class="hero-title">VoiceBill 🎙️🧾📲</h1>
+        <p class="hero-subtitle">
+          Multilingual Voice-First Billing & POS App for India’s 50M+ Street Vendors.<br/>
+          Speak naturally in Hindi, Bengali, or English — Share 1-Tap WhatsApp & CSV Excel Reports.
+        </p>
+        <div class="badge-row">
+          <div class="badge">🏆 Hack Synthesis 3.0 (UEM Kolkata)</div>
+          <div class="badge">🌐 Theme: Open Innovation</div>
+          <div class="badge">🚀 Team Leader: Debajoyati Bera</div>
+          <div class="badge">🤝 Teammate: Souvik Adak</div>
+        </div>
+        <div style="margin-top: 36px; background: rgba(0, 131, 176, 0.2); border: 1px solid var(--accent-blue); padding: 16px 28px; border-radius: 16px; display: inline-block;">
+          <span style="color: var(--accent-gold); font-weight: 700;">LIVE WEB DEMO:</span>
+          <a href="https://debajoyatibera.github.io/voicebill/" target="_blank" style="color: var(--text-white); font-weight: 800; font-size: 18px; margin-left: 8px; text-decoration: none;">debajoyatibera.github.io/voicebill/</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 2: The Problem -->
+    <div class="slide">
+      <div class="slide-header">
+        <h2 class="slide-title">1. The Real-World Problem</h2>
+        <p class="slide-subtitle">Why 50+ Million Indian Street Vendors Are Excluded from Digital POS Apps</p>
+      </div>
+      <div class="grid-3">
+        <div class="card" style="border-top: 4px solid var(--accent-coral);">
+          <div class="card-icon" style="background: rgba(255,65,108,0.15);">⌨️</div>
+          <h3 class="card-title" style="color: var(--accent-coral);">Touchscreen Friction</h3>
+          <p class="card-desc">Traditional POS apps require rapid typing on small smartphone keyboards. For vendors cooking tea, handling vegetables, or managing crowded stalls, typing is painfully slow and distracting.</p>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-gold);">
+          <div class="card-icon" style="background: rgba(255,183,3,0.15);">🗣️</div>
+          <h3 class="card-title" style="color: var(--accent-gold);">Language Barrier</h3>
+          <p class="card-desc">Existing apps force English hierarchies or rigid UI menus. India's hawkers speak natural vernacular dialects (Hindi, Bengali, Indian English) and need an interface that listens to how they speak.</p>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-blue);">
+          <div class="card-icon" style="background: rgba(0,131,176,0.15);">📝</div>
+          <h3 class="card-title" style="color: var(--accent-blue);">Accounting Disputes</h3>
+          <p class="card-desc">Vendors rely on mental math or paper chits, resulting in lost daily totals, billing errors, customer disputes, and an inability to track revenue or share records with accountants.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: Our Solution -->
+    <div class="slide">
+      <div class="slide-header">
+        <h2 class="slide-title">2. Our Solution — VoiceBill</h2>
+        <p class="slide-subtitle">A Keyless, Multilingual Voice-First Billing & Accounting App</p>
+      </div>
+      <div class="card" style="margin-bottom: 24px; background: rgba(0, 245, 212, 0.08); border-color: var(--accent-cyan);">
+        <h3 style="color: var(--text-white); font-size: 22px;">💡 Just Speak: <i style="color: var(--accent-cyan);">"do chai, panch panch rupaye"</i> or <i style="color: var(--accent-gold);">"tin samosa, bees rupaye"</i></h3>
+        <p style="color: var(--text-silver); font-size: 16px; margin-top: 6px;">VoiceBill listens in vernacular speech, uses Gemini AI to extract structured items & prices, calculates daily totals out loud, and shares instant business reports with 1-tap.</p>
+      </div>
+      <div class="grid-4">
+        <div class="card">
+          <div class="card-icon">1️⃣</div>
+          <h3 class="card-title" style="font-size: 18px;">Tap & Speak</h3>
+          <p class="card-desc">Tap the glowing mic button and say items & prices in vernacular speech.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">2️⃣</div>
+          <h3 class="card-title" style="font-size: 18px;">AI Parsing</h3>
+          <p class="card-desc">Gemini 1.5 Flash AI parses speech into item, quantity & unit price.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">3️⃣</div>
+          <h3 class="card-title" style="font-size: 18px;">Audio Readback</h3>
+          <p class="card-desc">Speaks aloud the sale & running daily collection in rupees.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">4️⃣</div>
+          <h3 class="card-title" style="font-size: 18px;">1-Tap Export</h3>
+          <p class="card-desc">Launch WhatsApp report synchronously or download an Excel CSV.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 4: System Architecture -->
+    <div class="slide">
+      <div class="slide-header">
+        <h2 class="slide-title">3. System Architecture & Keyless Security</h2>
+        <p class="slide-subtitle">Zero API Keys Exposed on Client — Serverless GCP & Appwrite Proxy</p>
+      </div>
+      <div class="grid-4">
+        <div class="card" style="border-left: 4px solid var(--accent-cyan);">
+          <h3 class="card-title" style="font-size: 19px; color: var(--accent-cyan);">1. CLIENT (Flutter)</h3>
+          <p class="card-desc">• Web, Android & iOS<br>• speech_to_text (Dictation)<br>• SharedPrefs offline store<br>• Zero API keys in bundle</p>
+        </div>
+        <div class="card" style="border-left: 4px solid var(--accent-blue);">
+          <h3 class="card-title" style="font-size: 19px; color: var(--accent-blue);">2. KEYLESS PROXY</h3>
+          <p class="card-desc">• Serverless Cloud Run / Appwrite<br>• Application Default Credentials<br>• Rate limits & CORS protection<br>• Shields secrets</p>
+        </div>
+        <div class="card" style="border-left: 4px solid var(--accent-gold);">
+          <h3 class="card-title" style="font-size: 19px; color: var(--accent-gold);">3. AI ENGINE</h3>
+          <p class="card-desc">• GCP Vertex AI Gemini 1.5 Flash<br>• Natural language parsing<br>• Returns JSON: {item, qty, price}<br>• Multi-dialect recognition</p>
+        </div>
+        <div class="card" style="border-left: 4px solid var(--accent-coral);">
+          <h3 class="card-title" style="font-size: 19px; color: var(--accent-coral);">4. EXPORT ENGINE</h3>
+          <p class="card-desc">• Check / Verified Badges<br>• flutter_tts Voice Summary<br>• Synchronous WhatsApp wa.me link<br>• HTML5 Blob CSV Download</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 5: Core Tech Stack -->
+    <div class="slide">
+      <div class="slide-header">
+        <h2 class="slide-title">4. Technical Stack & Dependencies</h2>
+        <p class="slide-subtitle">Modern Cross-Platform Web & Cloud Native Architecture</p>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h3 class="card-title">📱 Frontend Application</h3>
+          <p class="card-desc">
+            • <b>Flutter 3</b> (Web, Android, iOS cross-platform UI)<br>
+            • CanvasKit High-Performance Web Renderer<br>
+            • Tree-Shaken Font Icons & Optimized JS/WASM build<br>
+            • Glassmorphic cards and pulsing glowing microphone button
+          </p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">☁️ AI & Serverless Backend</h3>
+          <p class="card-desc">
+            • <b>Google Cloud Platform (GCP) Vertex AI</b><br>
+            • Gemini 1.5 Flash Structured JSON Output<br>
+            • Cloud Run Container / Appwrite Serverless Proxy<br>
+            • Application Default Credentials (ADC) zero-key security
+          </p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🎙️ Voice & Audio Intelligence</h3>
+          <p class="card-desc">
+            • <b>speech_to_text</b> (Dictation Mode, en_IN / hi_IN / bn_IN)<br>
+            • Web Speech API & Native Mobile Audio<br>
+            • <b>flutter_tts</b> (Text-to-Speech Hindi/Bengali/English)<br>
+            • Dynamic Speech Pause & Timeout Resiliency
+          </p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📊 Export & Storage Engine</h3>
+          <p class="card-desc">
+            • <b>url_launcher</b> (Synchronous WhatsApp wa.me sharing)<br>
+            • dart:html AnchorElement & Blob CSV Excel download<br>
+            • <b>shared_preferences</b> (Local JSON Daily Tally)<br>
+            • 1-Click Clipboard text copy support
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 6: Key Features -->
+    <div class="slide">
+      <div class="slide-header">
+        <h2 class="slide-title">5. Key Features & WOW Factors</h2>
+        <p class="slide-subtitle">Designed for Real-World Outdoor Street Markets</p>
+      </div>
+      <div class="grid-3">
+        <div class="card">
+          <h3 class="card-title">🎙️ Multilingual Speech POS</h3>
+          <p class="card-desc">Speaks fluent Hindi, Bengali & Indian English without switching complex keyboards.</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">⌨️ Noisy Market Fallback</h3>
+          <p class="card-desc">Type or paste sale dialog button for deafeningly loud train stations or festivals.</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📲 1-Tap WhatsApp Report</h3>
+          <p class="card-desc">Generates daily markdown sales report and opens WhatsApp synchronously (popup-proof).</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">📊 CSV Excel Export</h3>
+          <p class="card-desc">Downloads .csv Excel file with 1 click using web-native Blob anchor download.</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🔊 Audio TTS Readback</h3>
+          <p class="card-desc">Speaks aloud the itemized order and updated daily collection in rupees.</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🔒 Keyless Security</h3>
+          <p class="card-desc">100% keyless frontend using GCP Application Default Credentials and serverless proxy.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 7: Live Demo -->
+    <div class="slide">
+      <div class="slide-header">
+        <h2 class="slide-title">6. Live Interactive Demo & UI Showcase</h2>
+        <p class="slide-subtitle">Experience VoiceBill Live Online — No Installation Needed</p>
+      </div>
+      <div class="card" style="text-align: center; padding: 40px;">
+        <h3 style="font-size: 20px; color: var(--accent-gold); font-weight: 700;">🌐 LIVE GITHUB PAGES DEPLOYMENT</h3>
+        <a href="https://debajoyatibera.github.io/voicebill/" target="_blank" style="font-size: 36px; font-weight: 900; color: var(--text-white); margin: 16px 0; display: inline-block; text-decoration: none;">debajoyatibera.github.io/voicebill/</a>
+        <p style="font-size: 17px; color: var(--text-silver); max-width: 800px; margin: 0 auto 24px;">We believe in true Open Innovation — our application is fully deployed, tested, and accessible to any judge or street vendor instantly on their smartphone or laptop browser.</p>
+        <div style="background: rgba(0,245,212,0.1); border: 1px solid var(--accent-cyan); padding: 20px; border-radius: 16px; text-align: left; max-width: 700px; margin: 0 auto;">
+          <b style="color: var(--accent-cyan);">✨ Try This 3-Step Test Right Now:</b><br>
+          1. Open link & tap the Glowing Mic button at the bottom center.<br>
+          2. Speak: <i>"do chai, panch panch rupaye"</i> -> see instant AI card creation & hear rupee readback!<br>
+          3. Tap the green "WhatsApp" button -> see daily sales tally open synchronously in WhatsApp!
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 8: Challenges -->
+    <div class="slide">
+      <div class="slide-header">
+        <h2 class="slide-title">7. Technical Challenges & Solutions</h2>
+        <p class="slide-subtitle">Overcoming Real-World Browser, Speech & Cloud Hurdles</p>
+      </div>
+      <div class="grid-3">
+        <div class="card" style="border-top: 4px solid var(--accent-coral);">
+          <h3 class="card-title" style="color: var(--accent-coral);">⚡ WebSpeech Cutoffs</h3>
+          <p class="card-desc"><b>Challenge:</b> Web browsers cut off speech recognition during brief pauses in noisy street environments.<br><br><b>Solution:</b> Upgraded to ListenMode.dictation, implemented custom 10-second pause timeouts, and added stop-button transcript capture.</p>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-gold);">
+          <h3 class="card-title" style="color: var(--accent-gold);">🔒 Client Key Exposure</h3>
+          <p class="card-desc"><b>Challenge:</b> Embedding Gemini AI API keys in client JavaScript bundles leaves them vulnerable to scraping.<br><br><b>Solution:</b> Architected a keyless Serverless Cloud Run / Appwrite proxy utilizing GCP Application Default Credentials (ADC).</p>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--accent-cyan);">
+          <h3 class="card-title" style="color: var(--accent-cyan);">🚫 Popup Blockers</h3>
+          <p class="card-desc"><b>Challenge:</b> Awaiting URL check functions before launching WhatsApp caused Chrome/Safari to block new tabs.<br><br><b>Solution:</b> Refactored export button to call launchUrl() synchronously on direct user click and used HTML Blob for CSV downloads.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 9: Theme Alignment -->
+    <div class="slide">
+      <div class="slide-header">
+        <h2 class="slide-title">8. Theme Alignment — Open Innovation</h2>
+        <p class="slide-subtitle">Why VoiceBill Stands Out in Hack Synthesis 3.0</p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 16px; width: 100%;">
+        <div class="card" style="flex-direction: row; align-items: center; justify-content: space-between;">
+          <div>
+            <h3 class="card-title" style="font-size: 22px;">🇮🇳 Digital Financial Inclusion</h3>
+            <p class="card-desc" style="margin-top: 4px;">Brings India's unorganized street retail economy into digital accounting without requiring literacy or English typing skills.</p>
+          </div>
+          <span style="font-size: 32px;">🌐</span>
+        </div>
+        <div class="card" style="flex-direction: row; align-items: center; justify-content: space-between;">
+          <div>
+            <h3 class="card-title" style="font-size: 22px; color: var(--accent-gold);">💸 Zero Hardware Cost</h3>
+            <p class="card-desc" style="margin-top: 4px;">Runs on any existing budget smartphone or web browser — no expensive POS terminals or barcode scanners required.</p>
+          </div>
+          <span style="font-size: 32px;">📱</span>
+        </div>
+        <div class="card" style="flex-direction: row; align-items: center; justify-content: space-between;">
+          <div>
+            <h3 class="card-title" style="font-size: 22px; color: var(--accent-blue);">🤝 Open Source & Modular</h3>
+            <p class="card-desc" style="margin-top: 4px;">Clean MIT licensed Flutter codebase and modular serverless GCP proxy designed for community contributions and scaling.</p>
+          </div>
+          <span style="font-size: 32px;">🚀</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 10: Future Roadmap -->
+    <div class="slide">
+      <div class="slide-header">
+        <h2 class="slide-title">9. Future Roadmap & Vision</h2>
+        <p class="slide-subtitle">Expanding VoiceBill Across Indian Retail Ecosystems</p>
+      </div>
+      <div class="grid-3">
+        <div class="card">
+          <h3 class="card-title">Phase 1: Advanced Analytics</h3>
+          <p class="card-desc">• Multi-day & monthly revenue charts<br>• Peak selling hour visualization<br>• Item popularity rankings<br>• Export to Google Drive/Excel cloud</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">Phase 2: POS Hardware</h3>
+          <p class="card-desc">• Bluetooth thermal printer integration<br>• Print instant paper receipts for customers<br>• UPI QR code dynamic payment overlay<br>• Offline-first SQLite sync</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">Phase 3: WhatsApp Bot</h3>
+          <p class="card-desc">• Automated customer receipt messaging via QR scan<br>• AI vendor chatbot for stock replenishment<br>• Multilingual voice SMS alerts</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-bar">
+    <button class="nav-btn" onclick="prevSlide()">← Previous Slide</button>
+    <div style="font-weight: 600; color: var(--text-silver);">Use Keyboard <b style="color: white;">← / →</b> or <b style="color: white;">Space</b> to Navigate</div>
+    <button class="nav-btn" onclick="nextSlide()">Next Slide →</button>
+  </div>
+
+  <div class="progress-bar" id="progressBar"></div>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const currSlideEl = document.getElementById('currSlide');
+    const progressBar = document.getElementById('progressBar');
+    let current = 0;
+
+    function updateSlide() {
+      slides.forEach((s, idx) => {
+        s.classList.toggle('active', idx === current);
+      });
+      currSlideEl.innerText = current + 1;
+      const progress = ((current + 1) / slides.length) * 100;
+      progressBar.style.width = progress + '%';
+    }
+
+    function nextSlide() {
+      if (current < slides.length - 1) {
+        current++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (current > 0) {
+        current--;
+        updateSlide();
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        prevSlide();
+      }
+    });
+
+    updateSlide();
+  </script>
+</body>
+</html>
