@@ -50,11 +50,12 @@ class ExportService {
     try {
       final encodedText = Uri.encodeComponent(text);
       final url = Uri.parse('https://wa.me/?text=$encodedText');
-      return await launchUrl(
+      launchUrl(
         url,
         mode: LaunchMode.platformDefault,
         webOnlyWindowName: '_blank',
       );
+      return true;
     } catch (e) {
       return false;
     }

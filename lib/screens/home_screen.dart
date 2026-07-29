@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/sale_entry.dart';
 import '../services/export_service.dart';
 import '../services/gemini_service.dart';
@@ -220,17 +221,27 @@ class _HomeScreenState extends State<HomeScreen>
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    onPressed: () async {
-                      Navigator.pop(ctx);
-                      final success =
-                          await ExportService.shareOnWhatsApp(reportText);
-                      if (!success && mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                                'Could not open WhatsApp. Try copying the report text instead.'),
-                          ),
+                    onPressed: () {
+                      try {
+                        final encodedText = Uri.encodeComponent(reportText);
+                        final url =
+                            Uri.parse('https://wa.me/?text=$encodedText');
+                        launchUrl(
+                          url,
+                          mode: LaunchMode.platformDefault,
+                          webOnlyWindowName: '_blank',
                         );
+                        Navigator.pop(ctx);
+                      } catch (e) {
+                        Navigator.pop(ctx);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                  'Could not open WhatsApp. Try copying the report text instead.'),
+                            ),
+                          );
+                        }
                       }
                     },
                     icon: const Icon(Icons.chat_bubble_rounded, size: 20),
