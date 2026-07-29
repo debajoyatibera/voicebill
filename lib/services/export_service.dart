@@ -1,4 +1,7 @@
 import 'dart:convert';
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:html' as html;
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/sale_entry.dart';
@@ -44,42 +47,65 @@ class ExportService {
 
   /// Opens WhatsApp with the daily report pre-filled
   static Future<bool> shareOnWhatsApp(String text) async {
-    final encodedText = Uri.encodeComponent(text);
-    final url = Uri.parse('https://wa.me/?text=$encodedText');
-    if (await canLaunchUrl(url)) {
-      return launchUrl(url, mode: LaunchMode.externalApplication);
+    try {
+      final encodedText = Uri.encodeComponent(text);
+      final url = Uri.parse('https://wa.me/?text=$encodedText');
+      return await launchUrl(
+        url,
+        mode: LaunchMode.platformDefault,
+        webOnlyWindowName: '_blank',
+      );
+    } catch (e) {
+      return false;
     }
-    return false;
   }
 
-  /// Generates a CSV spreadsheet and opens it for download
+  /// Generates a CSV spreadsheet and opens/downloads it
   static Future<bool> downloadCsv(
     List<SaleEntry> sales,
     double total,
     DateTime date,
   ) async {
-    final buffer = StringBuffer();
-    buffer.writeln('ID,Item,Quantity,PricePerUnit(INR),Total(INR),Time,Confidence');
-
-    for (final s in sales) {
-      final timeStr = DateFormat('hh:mm a').format(s.timestamp);
-      final item = s.item.replaceAll(',', ' ');
+    try {
+      final dateStr = DateFormat('yyyy-MM-dd').format(date);
+      final buffer = StringBuffer();
       buffer.writeln(
-        '${s.id},$item,${_fmt(s.quantity)},${_fmt(s.pricePerUnit)},${_fmt(s.total)},$timeStr,${s.confidence.toStringAsFixed(2)}',
-      );
+          'ID,Item,Quantity,PricePerUnit(INR),Total(INR),Time,Confidence');
+
+      for (final s in sales) {
+        final timeStr = DateFormat('hh:mm a').format(s.timestamp);
+        final item = s.item.replaceAll(',', ' ');
+        buffer.writeln(
+          '${s.id},$item,${_fmt(s.quantity)},${_fmt(s.pricePerUnit)},${_fmt(s.total)},$timeStr,${s.confidence.toStringAsFixed(2)}',
+        );
+      }
+
+      buffer.writeln('TOTAL,,,,${_fmt(total)},,');
+
+      final csvContent = buffer.toString();
+      final bytes = utf8.encode(csvContent);
+
+      if (kIsWeb) {
+        // Correct web browser file download using Blob & AnchorElement
+        final blob = html.Blob([bytes], 'text/csv');
+        final url = html.Url.createObjectUrlFromBlob(blob);
+        final anchor = html.AnchorElement(href: url)
+          ..setAttribute('download', 'voicebill_sales_$dateStr.csv')
+          ..style.display = 'none';
+        html.document.body?.children.add(anchor);
+        anchor.click();
+        anchor.remove();
+        html.Url.revokeObjectUrl(url);
+        return true;
+      } else {
+        // Fallback for mobile/desktop using data URI
+        final base64Csv = base64Encode(bytes);
+        final dataUrl = Uri.parse('data:text/csv;base64,$base64Csv');
+        return await launchUrl(dataUrl, mode: LaunchMode.platformDefault);
+      }
+    } catch (e) {
+      return false;
     }
-
-    buffer.writeln('TOTAL,,,,${_fmt(total)},,');
-
-    final csvContent = buffer.toString();
-    final bytes = utf8.encode(csvContent);
-    final base64Csv = base64Encode(bytes);
-    final dataUrl = Uri.parse('data:text/csv;base64,$base64Csv');
-
-    if (await canLaunchUrl(dataUrl)) {
-      return launchUrl(dataUrl, mode: LaunchMode.platformDefault);
-    }
-    return false;
   }
 
   static String _fmt(double v) =>

@@ -222,7 +222,16 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     onPressed: () async {
                       Navigator.pop(ctx);
-                      await ExportService.shareOnWhatsApp(reportText);
+                      final success =
+                          await ExportService.shareOnWhatsApp(reportText);
+                      if (!success && mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                                'Could not open WhatsApp. Try copying the report text instead.'),
+                          ),
+                        );
+                      }
                     },
                     icon: const Icon(Icons.chat_bubble_rounded, size: 20),
                     label: const Text(
@@ -245,8 +254,16 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     onPressed: () async {
                       Navigator.pop(ctx);
-                      await ExportService.downloadCsv(
+                      final success = await ExportService.downloadCsv(
                           _sales, _dailyTotal, _today);
+                      if (!success && mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                                'Could not download CSV. Check browser permissions.'),
+                          ),
+                        );
+                      }
                     },
                     icon: const Icon(Icons.table_chart_rounded, size: 20),
                     label: const Text(
@@ -272,6 +289,8 @@ class _HomeScreenState extends State<HomeScreen>
                   await Clipboard.setData(ClipboardData(text: reportText));
                   if (ctx.mounted) {
                     Navigator.pop(ctx);
+                  }
+                  if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Report copied to clipboard!'),
