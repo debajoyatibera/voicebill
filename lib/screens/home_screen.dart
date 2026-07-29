@@ -13,7 +13,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   late final GeminiService _gemini;
   final SpeechService _speech = SpeechService();
   final StorageService _storage = StorageService();
@@ -29,11 +30,16 @@ class _HomeScreenState extends State<HomeScreen> {
   double _dailyTotal = 0;
 
   final DateTime _today = DateTime.now();
+  late AnimationController _pulseController;
 
   @override
   void initState() {
     super.initState();
     _gemini = GeminiService();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
     _loadSales();
   }
 
@@ -96,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       setState(() {
         _errorMessage = 'Something went wrong talking to Gemini. Check your '
-            'internet connection and API key, then try again.';
+            'internet connection and try again.';
       });
     } finally {
       setState(() => _isProcessing = false);
@@ -135,6 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    _pulseController.dispose();
     _tts.stop();
     super.dispose();
   }
@@ -142,17 +149,62 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF6F9FD),
       appBar: AppBar(
-        title: const Text('VoiceBill'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF00B4DB), Color(0xFF0083B0)],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.mic_rounded, color: Colors.white, size: 22),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'VoiceBill',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 24,
+                letterSpacing: -0.5,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+          ],
+        ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
+          Container(
+            margin: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
             child: DropdownButton<String>(
               value: _selectedLanguage,
-              dropdownColor: Theme.of(context).colorScheme.surface,
               underline: const SizedBox(),
+              icon: const Icon(Icons.language_rounded,
+                  size: 18, color: Color(0xFF0083B0)),
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1E293B),
+                fontSize: 13,
+              ),
               items: VoiceLocale.options.keys
-                  .map((lang) => DropdownMenuItem(value: lang, child: Text(lang)))
+                  .map((lang) =>
+                      DropdownMenuItem(value: lang, child: Text(lang)))
                   .toList(),
               onChanged: (v) {
                 if (v != null) setState(() => _selectedLanguage = v);
@@ -165,17 +217,50 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           _buildTotalCard(),
           if (_errorMessage != null) _buildErrorBanner(),
-          if (_isListening || _liveTranscript.isNotEmpty) _buildLiveTranscript(),
+          if (_isListening || _liveTranscript.isNotEmpty)
+            _buildLiveTranscript(),
           Expanded(
             child: _sales.isEmpty
-                ? const Center(
-                    child: Text(
-                      'No sales yet today.\nTap the mic and speak a sale.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey),
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0083B0).withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.receipt_long_rounded,
+                            size: 40,
+                            color: Color(0xFF0083B0),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'No sales recorded today yet',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF334155),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Tap the glowing mic & speak a sale naturally\ne.g., "do chai, panch panch rupaye"',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
                     ),
                   )
                 : ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 100),
                     itemCount: _sales.length,
                     itemBuilder: (context, i) => SaleCard(
                       sale: _sales[i],
@@ -186,24 +271,66 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          FloatingActionButton.extended(
-            heroTag: 'summary',
-            onPressed: _speakSummary,
-            label: const Text('Speak summary'),
-            icon: const Icon(Icons.volume_up),
-          ),
-          FloatingActionButton.large(
-            heroTag: 'mic',
-            onPressed: _isProcessing ? null : _toggleListening,
-            backgroundColor: _isListening ? Colors.red : null,
-            child: _isProcessing
-                ? const CircularProgressIndicator(color: Colors.white)
-                : Icon(_isListening ? Icons.stop : Icons.mic),
-          ),
-        ],
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            FloatingActionButton.extended(
+              heroTag: 'summary',
+              onPressed: _speakSummary,
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFF0083B0),
+              elevation: 4,
+              label: const Text(
+                'Speak Summary',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              icon: const Icon(Icons.volume_up_rounded),
+            ),
+            AnimatedBuilder(
+              animation: _pulseController,
+              builder: (context, child) {
+                return Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: _isListening
+                        ? [
+                            BoxShadow(
+                              color: const Color(0xFFFF416C)
+                                  .withOpacity(0.3 + 0.3 * _pulseController.value),
+                              blurRadius: 20,
+                              spreadRadius: 8 * _pulseController.value,
+                            ),
+                          ]
+                        : [
+                            BoxShadow(
+                              color: const Color(0xFF0083B0).withOpacity(0.4),
+                              blurRadius: 16,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                  ),
+                  child: FloatingActionButton.large(
+                    heroTag: 'mic',
+                    onPressed: _isProcessing ? null : _toggleListening,
+                    backgroundColor: _isListening
+                        ? const Color(0xFFFF416C)
+                        : const Color(0xFF0083B0),
+                    child: _isProcessing
+                        ? const CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 3)
+                        : Icon(
+                            _isListening ? Icons.stop_rounded : Icons.mic_rounded,
+                            size: 38,
+                            color: Colors.white,
+                          ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -211,16 +338,71 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildTotalCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      color: Theme.of(context).colorScheme.primaryContainer,
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0A2540), Color(0xFF1A365D), Color(0xFF2563EB)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2563EB).withOpacity(0.35),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Today's Total", style: TextStyle(fontSize: 14)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.auto_awesome, color: Color(0xFF60A5FA), size: 16),
+                    SizedBox(width: 6),
+                    Text(
+                      "TODAY'S COLLECTION",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '${_sales.length} sale(s)',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.7),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
           Text(
             '₹${_dailyTotal.toStringAsFixed(0)}',
-            style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 44,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -1.5,
+            ),
           ),
-          Text('${_sales.length} sale(s)', style: const TextStyle(fontSize: 12)),
         ],
       ),
     );
@@ -229,15 +411,30 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildErrorBanner() {
     return Container(
       width: double.infinity,
-      color: Colors.orange.shade100,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFDBA74)),
+      ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline, size: 18, color: Colors.orange),
-          const SizedBox(width: 8),
-          Expanded(child: Text(_errorMessage!, style: const TextStyle(fontSize: 13))),
+          const Icon(Icons.info_outline_rounded,
+              size: 22, color: Color(0xFFEA580C)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _errorMessage!,
+              style: const TextStyle(
+                  fontSize: 13.5,
+                  color: Color(0xFF9A3412),
+                  fontWeight: FontWeight.w600),
+            ),
+          ),
           IconButton(
-            icon: const Icon(Icons.close, size: 16),
+            icon: const Icon(Icons.close_rounded,
+                size: 18, color: Color(0xFFEA580C)),
             onPressed: () => setState(() => _errorMessage = null),
           ),
         ],
@@ -248,11 +445,37 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildLiveTranscript() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: Colors.grey.shade100,
-      child: Text(
-        _liveTranscript.isEmpty ? 'Listening...' : '"$_liveTranscript"',
-        style: const TextStyle(fontStyle: FontStyle.italic),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.spatial_audio_rounded,
+              color: Color(0xFF0083B0), size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _liveTranscript.isEmpty
+                  ? 'Listening for speech...'
+                  : '"$_liveTranscript"',
+              style: const TextStyle(
+                fontStyle: FontStyle.italic,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF334155),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
