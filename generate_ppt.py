@@ -389,45 +389,57 @@ def create_deck():
         p2.space_before = Pt(10)
 
     # -------------------------------------------------------------
-    # SLIDE 7: Live Web Demo Showcase
+    # SLIDE 7: Live Web Demo & UI Showcase (With Embedded Screenshot)
     # -------------------------------------------------------------
     slide7 = prs.slides.add_slide(blank_layout)
     add_header(slide7, "6. Live Interactive Demo & UI Showcase", "Experience VoiceBill Live Online — No Installation Needed")
 
-    # Big Demo Card
-    demo_card = add_card(slide7, Inches(0.8), Inches(1.8), Inches(11.7), Inches(4.5), CARD_BG, ACCENT_CYAN)
+    # Left Text & Demo Link Card
+    demo_card = add_card(slide7, Inches(0.8), Inches(1.8), Inches(5.6), Inches(4.7), CARD_BG, ACCENT_CYAN)
     dtf = demo_card.text_frame
     dtf.word_wrap = True
-    dtf.margin_left = Inches(0.4)
-    dtf.margin_top = Inches(0.4)
+    dtf.margin_left = Inches(0.3)
+    dtf.margin_top = Inches(0.3)
     
     dp1 = dtf.paragraphs[0]
     dp1.text = "🌐 LIVE GITHUB PAGES DEPLOYMENT"
     dp1.font.bold = True
-    dp1.font.size = Pt(16)
+    dp1.font.size = Pt(15)
     dp1.font.color.rgb = ACCENT_GOLD
     
     dp2 = dtf.add_paragraph()
     dp2.text = "https://debajoyatibera.github.io/voicebill/"
     dp2.font.bold = True
-    dp2.font.size = Pt(32)
+    dp2.font.size = Pt(19)
     dp2.font.color.rgb = TEXT_WHITE
-    dp2.space_before = Pt(10)
+    dp2.space_before = Pt(8)
     
     dp3 = dtf.add_paragraph()
-    dp3.text = "We believe in true Open Innovation — our application is fully deployed, tested, and accessible to any judge or street vendor instantly on their smartphone or laptop browser."
-    dp3.font.size = Pt(16)
+    dp3.text = "We believe in true Open Innovation — our application is fully deployed, tested, and accessible to any judge or street vendor instantly on their browser."
+    dp3.font.size = Pt(14)
     dp3.font.color.rgb = TEXT_SILVER
-    dp3.space_before = Pt(14)
+    dp3.space_before = Pt(10)
 
     dp4 = dtf.add_paragraph()
     dp4.text = "✨ Try This 3-Step Test Right Now:\n" \
-               "1. Open link & tap the Glowing Mic button at the bottom center.\n" \
-               "2. Speak: \"do chai, panch panch rupaye\" -> see instant AI card creation & hear rupee readback!\n" \
-               "3. Tap the green \"WhatsApp\" button -> see daily sales tally open synchronously in WhatsApp!"
-    dp4.font.size = Pt(16)
+               "1. Open link & tap the Glowing Mic button.\n" \
+               "2. Speak: \"do chai, panch panch rupaye\" -> see instant AI card & hear rupee readback!\n" \
+               "3. Tap green \"WhatsApp\" button -> see daily sales tally open synchronously!"
+    dp4.font.size = Pt(14)
     dp4.font.color.rgb = ACCENT_CYAN
-    dp4.space_before = Pt(20)
+    dp4.space_before = Pt(14)
+
+    # Right Screenshot Card & Embedded Picture
+    img_card = add_card(slide7, Inches(6.6), Inches(1.8), Inches(5.9), Inches(4.7), CARD_BG, ACCENT_BLUE)
+    img_path = os.path.join(os.path.dirname(__file__), "screenshot_demo.png")
+    if os.path.exists(img_path):
+        slide7.shapes.add_picture(img_path, Inches(6.8), Inches(2.1), Inches(5.5))
+    else:
+        itf = img_card.text_frame
+        ip = itf.paragraphs[0]
+        ip.text = "Live App UI Showcase"
+        ip.font.size = Pt(20)
+        ip.font.color.rgb = ACCENT_CYAN
 
     # -------------------------------------------------------------
     # SLIDE 8: Technical Challenges & How We Solved Them
