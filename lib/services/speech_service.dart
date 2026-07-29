@@ -45,16 +45,20 @@ class SpeechService {
       if (!ok) return;
     }
 
+    final options = stt.SpeechListenOptions(
+      listenMode: stt.ListenMode.dictation,
+      partialResults: true,
+      cancelOnError: false,
+    );
+
     await _speech.listen(
       localeId: localeId,
       onResult: (result) {
         onResult(result.recognizedWords, result.finalResult);
       },
-      listenFor: const Duration(seconds: 15),
-      pauseFor: const Duration(seconds: 3),
-      partialResults: true,
-      cancelOnError: true,
-      listenMode: stt.ListenMode.confirmation,
+      listenFor: const Duration(seconds: 30),
+      pauseFor: const Duration(seconds: 10),
+      listenOptions: options,
     );
   }
 

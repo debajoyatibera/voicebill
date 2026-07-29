@@ -23,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen>
   String _selectedLanguage = 'English (India)';
   bool _isListening = false;
   bool _isProcessing = false;
+  bool _hasSubmittedTranscript = false;
   String _liveTranscript = '';
   String? _errorMessage;
 
@@ -56,6 +57,9 @@ class _HomeScreenState extends State<HomeScreen>
     if (_isListening) {
       await _speech.stop();
       setState(() => _isListening = false);
+      if (_liveTranscript.trim().isNotEmpty && !_hasSubmittedTranscript) {
+        await _handleTranscript(_liveTranscript);
+      }
       return;
     }
 
@@ -63,6 +67,7 @@ class _HomeScreenState extends State<HomeScreen>
       _errorMessage = null;
       _liveTranscript = '';
       _isListening = true;
+      _hasSubmittedTranscript = false;
     });
 
     final localeId = VoiceLocale.options[_selectedLanguage]!;
@@ -71,7 +76,10 @@ class _HomeScreenState extends State<HomeScreen>
       localeId: localeId,
       onResult: (transcript, isFinal) async {
         setState(() => _liveTranscript = transcript);
-        if (isFinal && transcript.trim().isNotEmpty) {
+        if (isFinal &&
+            transcript.trim().isNotEmpty &&
+            !_hasSubmittedTranscript) {
+          _hasSubmittedTranscript = true;
           setState(() => _isListening = false);
           await _handleTranscript(transcript);
         }
@@ -79,8 +87,71 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  Future<void> _showTypeSaleDialog() async {
+    final controller = TextEditingController();
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.keyboard_rounded, color: Color(0xFF0083B0)),
+            SizedBox(width: 8),
+            Text(
+              'Type or Paste Sale',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+          ],
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: 'e.g. "do chai, panch panch rupaye"',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          onSubmitted: (val) {
+            Navigator.pop(ctx);
+            if (val.trim().isNotEmpty) {
+              _handleTranscript(val);
+            }
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0083B0),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              if (controller.text.trim().isNotEmpty) {
+                _handleTranscript(controller.text);
+              }
+            },
+            child: const Text('Add Sale'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _handleTranscript(String transcript) async {
-    setState(() => _isProcessing = true);
+    if (_isProcessing) return;
+    _hasSubmittedTranscript = true;
+    setState(() {
+      _isProcessing = true;
+      _isListening = false;
+    });
     try {
       final sale = await _gemini.parseTranscript(transcript);
       if (sale == null) {
@@ -163,7 +234,8 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.mic_rounded, color: Colors.white, size: 22),
+              child:
+                  const Icon(Icons.mic_rounded, color: Colors.white, size: 22),
             ),
             const SizedBox(width: 12),
             const Text(
@@ -186,7 +258,7 @@ class _HomeScreenState extends State<HomeScreen>
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -229,7 +301,7 @@ class _HomeScreenState extends State<HomeScreen>
                           width: 80,
                           height: 80,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0083B0).withOpacity(0.1),
+                            color: const Color(0xFF0083B0).withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -260,7 +332,7 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.only(bottom: 100),
+                    padding: const EdgeInsets.only(bottom: 110),
                     itemCount: _sales.length,
                     itemBuilder: (context, i) => SaleCard(
                       sale: _sales[i],
@@ -272,21 +344,35 @@ class _HomeScreenState extends State<HomeScreen>
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            FloatingActionButton.extended(
-              heroTag: 'summary',
-              onPressed: _speakSummary,
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF0083B0),
-              elevation: 4,
-              label: const Text(
-                'Speak Summary',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              icon: const Icon(Icons.volume_up_rounded),
+            Row(
+              children: [
+                FloatingActionButton.extended(
+                  heroTag: 'summary',
+                  onPressed: _speakSummary,
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF0083B0),
+                  elevation: 4,
+                  label: const Text(
+                    'Speak Summary',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  icon: const Icon(Icons.volume_up_rounded),
+                ),
+                const SizedBox(width: 10),
+                FloatingActionButton(
+                  heroTag: 'keyboard',
+                  onPressed: _showTypeSaleDialog,
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF0083B0),
+                  elevation: 4,
+                  tooltip: 'Type or paste sale',
+                  child: const Icon(Icons.keyboard_rounded),
+                ),
+              ],
             ),
             AnimatedBuilder(
               animation: _pulseController,
@@ -297,15 +383,16 @@ class _HomeScreenState extends State<HomeScreen>
                     boxShadow: _isListening
                         ? [
                             BoxShadow(
-                              color: const Color(0xFFFF416C)
-                                  .withOpacity(0.3 + 0.3 * _pulseController.value),
+                              color: const Color(0xFFFF416C).withValues(
+                                  alpha: 0.3 + 0.3 * _pulseController.value),
                               blurRadius: 20,
                               spreadRadius: 8 * _pulseController.value,
                             ),
                           ]
                         : [
                             BoxShadow(
-                              color: const Color(0xFF0083B0).withOpacity(0.4),
+                              color:
+                                  const Color(0xFF0083B0).withValues(alpha: 0.4),
                               blurRadius: 16,
                               offset: const Offset(0, 6),
                             ),
@@ -321,7 +408,9 @@ class _HomeScreenState extends State<HomeScreen>
                         ? const CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 3)
                         : Icon(
-                            _isListening ? Icons.stop_rounded : Icons.mic_rounded,
+                            _isListening
+                                ? Icons.stop_rounded
+                                : Icons.mic_rounded,
                             size: 38,
                             color: Colors.white,
                           ),
@@ -349,7 +438,7 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF2563EB).withOpacity(0.35),
+            color: const Color(0xFF2563EB).withValues(alpha: 0.35),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -362,14 +451,16 @@ class _HomeScreenState extends State<HomeScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.auto_awesome, color: Color(0xFF60A5FA), size: 16),
+                    Icon(Icons.auto_awesome,
+                        color: Color(0xFF60A5FA), size: 16),
                     SizedBox(width: 6),
                     Text(
                       "TODAY'S COLLECTION",
@@ -386,7 +477,7 @@ class _HomeScreenState extends State<HomeScreen>
               Text(
                 '${_sales.length} sale(s)',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
+                  color: Colors.white.withValues(alpha: 0.7),
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                 ),
@@ -452,7 +543,7 @@ class _HomeScreenState extends State<HomeScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
