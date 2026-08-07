@@ -166,10 +166,12 @@ def create_deck():
     dp1.font.color.rgb = ACCENT_CYAN
     
     dp2 = dtf.add_paragraph()
-    dp2.text = "https://debajoyatibera.github.io/voicebill/"
-    dp2.font.bold = True
-    dp2.font.size = Pt(17)
-    dp2.font.color.rgb = TEXT_WHITE
+    run = dp2.add_run()
+    run.text = "https://debajoyatibera.github.io/voicebill/"
+    run.font.bold = True
+    run.font.size = Pt(17)
+    run.font.color.rgb = ACCENT_CYAN
+    run.hyperlink.address = "https://debajoyatibera.github.io/voicebill/"
     dp2.space_before = Pt(12)
 
     dp3 = dtf.add_paragraph()
@@ -408,10 +410,12 @@ def create_deck():
     dp1.font.color.rgb = ACCENT_GOLD
     
     dp2 = dtf.add_paragraph()
-    dp2.text = "https://debajoyatibera.github.io/voicebill/"
-    dp2.font.bold = True
-    dp2.font.size = Pt(19)
-    dp2.font.color.rgb = TEXT_WHITE
+    run = dp2.add_run()
+    run.text = "https://debajoyatibera.github.io/voicebill/"
+    run.font.bold = True
+    run.font.size = Pt(19)
+    run.font.color.rgb = ACCENT_CYAN
+    run.hyperlink.address = "https://debajoyatibera.github.io/voicebill/"
     dp2.space_before = Pt(8)
     
     dp3 = dtf.add_paragraph()
